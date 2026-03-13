@@ -1,1 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UltraBestBuy — Dropship Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0a0a0a;--white:#fff;--yellow:#FFD600;--yellow-dark:#E6C200;
+  --gray-50:#f9f9f9;--gray-100:#f0f0f0;--gray-200:#e2e2e2;--gray-400:#9e9e9e;--gray-600:#555;
+  --green:#00c853;--red:#ff3b3b;--blue:#1a73e8;--orange:#ff6d00;
+  --radius:10px;--radius-sm:7px;--font-display:'Barlow Condensed',sans-serif;--font-body:'DM Sans',sans-serif;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-body);background:#f5f5f5;color:var(--black);font-size:14px;display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--black);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;flex-shrink:0;}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.logo-bolt{background:var(--yellow);width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.logo-text{font-family:var(--font-display);font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto;}
+.nav-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.3);padding:12px 18px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;transition:background 0.15s;border-left:3px solid transparent;font-size:13px;color:rgba(255,255,255,0.65);}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:#fff;}
+.nav-item.active{background:rgba(255,214,0,0.1);border-left-color:var(--yellow);color:var(--yellow);}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.sidebar-bottom{padding:16px 18px;border-top:1px solid rgba(255,255,255,0.08);}
+.store-badge{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.5);}
+.store-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-title{font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:-0.5px;}
+.topbar-actions{display:flex;align-items:center;gap:10px;}
+.content{padding:24px 28px;flex:1;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.18s;white-space:nowrap;}
+.btn-primary{background:var(--black);color:#fff;}
+.btn-primary:hover{background:#333;}
+.btn-yellow{background:var(--yellow);color:var(--black);}
+.btn-yellow:hover{background:var(--yellow-dark);}
+.btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200);}
+.btn-ghost:hover{background:var(--gray-50);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-danger{background:var(--red);color:#fff;}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px;}
+.card-title{font-family:var(--font-display);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:-0.3px;margin-bottom:14px;}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.metric-card{background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.metric-icon{font-size:22px;margin-bottom:10px;}
+.metric-val{font-family:var(--font-display);font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;}
+.metric-lbl{font-size:12px;color:var(--gray-400);font-weight:500;}
+.metric-change{font-size:11px;margin-top:6px;font-weight:600;}
+.metric-up{color:var(--green);}
+.metric-down{color:var(--red);}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;}
+.badge-green{background:rgba(0,200,83,0.1);color:#00963d;}
+.badge-yellow{background:rgba(255,214,0,0.15);color:#8a7000;}
+.badge-red{background:rgba(255,59,59,0.1);color:#cc0000;}
+.badge-blue{background:rgba(26,115,232,0.1);color:#1557b0;}
+.badge-gray{background:var(--gray-100);color:var(--gray-600);}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-400);padding:10px 12px;text-align:left;border-bottom:1px solid var(--gray-100);}
+td{padding:12px;border-bottom:1px solid var(--gray-100);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--gray-50);}
+
+/* PRODUCT GRID */
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.product-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:all 0.18s;border:2px solid transparent;}
+.product-card:hover{border-color:var(--gray-200);transform:translateY(-2px);}
+.product-card.selected{border-color:var(--yellow);box-shadow:0 4px 16px rgba(255,214,0,0.2);}
+.product-card.imported{border-color:var(--green);}
+.product-img{aspect-ratio:1;background:var(--gray-50);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;}
+.product-body{padding:12px;}
+.product-title{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.product-price{font-family:var(--font-display);font-size:18px;font-weight:800;}
+.product-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+.product-ship{font-size:11px;color:var(--green);font-weight:600;}
+.wh-tag{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-group label{font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.filter-group select,.filter-group input{border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 12px;font-family:var(--font-body);font-size:13px;background:var(--white);outline:none;min-width:130px;}
+.filter-group select:focus,.filter-group input:focus{border-color:var(--black);}
+
+/* BULK BAR */
+.bulk-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--black);color:#fff;border-radius:var(--radius-sm);margin-bottom:14px;}
+.bulk-bar span{font-size:13px;}
+
+/* TOGGLE */
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray-100);}
+.toggle-wrap:last-child{border-bottom:none;}
+.toggle-info strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px;}
+.toggle-info span{font-size:12px;color:var(--gray-400);}
+.toggle{width:40px;height:22px;border-radius:11px;background:var(--gray-200);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--green);}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on::after{left:20px;}
+
+/* TABS */
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--gray-100);margin-bottom:20px;}
+.tab{padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--gray-400);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.15s;}
+.tab:hover{color:var(--black);}
+.tab.active{color:var(--black);border-bottom-color:var(--yellow);}
+
+/* PROFIT BAR */
+.profit-breakdown{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0;}
+.progress-bar{height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.5s;}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{background:var(--black);color:#fff;padding:12px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;animation:slideIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+.toast.success{border-left:4px solid var(--green);}
+.toast.error{border-left:4px solid var(--red);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--radius);padding:28px;max-width:480px;width:100%;margin:20px;}
+.modal h3{font-family:var(--font-display);font-size:20px;font-weight:800;text-transform:uppercase;margin-bottom:16px;}
+
+/* CHART */
+.chart-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding:0 4px;}
+.chart-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.chart-bar{background:var(--yellow);border-radius:4px 4px 0 0;width:100%;transition:height 0.5s;min-height:4px;}
+.chart-label{font-size:10px;color:var(--gray-400);}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--gray-400);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty h3{font-size:16px;font-weight:600;color:var(--gray-600);margin-bottom:6px;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{width:200px;}
+  .main{margin-left:200px;}
+  .metrics-grid{grid-template-columns:repeat(2,1fr);}
+  .content{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-bolt">⚡</div>
+    <div class="logo-text">UltraBestBuy</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-label">Products</div>
+    <div class="nav-item" onclick="showPage('import',this)">
+      <span class="nav-icon">🔍</span> Import Products
+    </div>
+    <div class="nav-item" onclick="showPage('products',this)">
+      <span class="nav-icon">📦</span> My Products
+    </div>
+    <div class="nav-label">Operations</div>
+    <div class="nav-item" onclick="showPage('orders',this)">
+      <span class="nav-icon">🛒</span> Orders
+      <span id="orderBadge" style="margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;">2</span>
+    </div>
+    <div class="nav-item" onclick="showPage('analytics',this)">
+      <span class="nav-icon">📈</span> Analytics
+    </div>
+    <div class="nav-label">Settings</div>
+    <div class="nav-item" onclick="showPage('automation',this)">
+      <span class="nav-icon">⚙️</span> Automation
+    </div>
+    <div class="nav-item" onclick="showPage('pricing',this)">
+      <span class="nav-icon">💰</span> Pricing Rules
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="store-badge">
+      <div class="store-dot"></div>
+      <span>ultrabestbuy.com</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="syncAll()">🔄 Sync Now</button>
+      <button class="btn btn-yellow btn-sm" onclick="showPage('import',null)">+ Import Products</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">💰</div>
+          <div class="metric-val" id="d-revenue">$50.96</div>
+          <div class="metric-lbl">Total Revenue</div>
+          <div class="metric-change metric-up">↑ 12% this week</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">📈</div>
+          <div class="metric-val" id="d-profit">$36.37</div>
+          <div class="metric-lbl">Total Profit</div>
+          <div class="metric-change metric-up">↑ 71.4% margin</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🛒</div>
+          <div class="metric-val" id="d-orders">4</div>
+          <div class="metric-lbl">Total Orders</div>
+          <div class="metric-change metric-up">2 awaiting fulfillment</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">📦</div>
+          <div class="metric-val" id="d-products">3</div>
+          <div class="metric-lbl">Active Products</div>
+          <div class="metric-change metric-up">All synced with CJ</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-title">Revenue this week</div>
+          <div class="chart-bars" id="revenueChart"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent orders</div>
+          <div id="recentOrders"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Top performing products</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Product</th><th>Orders</th><th>Revenue</th><th>Profit</th><th>Stock</th><th>Status</th></tr></thead>
+            <tbody id="topProductsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORT -->
+    <div id="page-import" class="page" style="display:none;">
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="filter-group" style="flex:3;min-width:200px;">
+            <label>Search CJ catalog</label>
+            <input type="text" id="searchQ" placeholder="bluetooth speaker, led strip, phone mount..." value="">
+          </div>
+          <div class="filter-group">
+            <label>Category</label>
+            <select id="catF">
+              <option value="All">All Categories</option>
+              <option>Electronics</option><option>Smart Home</option><option>Kitchen</option>
+              <option>Outdoor</option><option>Fitness</option><option>Car</option><option>Beauty</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="searchProducts()">Search</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:flex-end;">
+          <div class="filter-group">
+            <label>Warehouse</label>
+            <select id="whF">
+              <option value="us">🇺🇸 US Warehouse</option>
+              <option value="cn">🌏 CN Standard</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Max ship days</label>
+            <select id="daysF">
+              <option value="5">Under 5 days</option>
+              <option value="7" selected>Under 7 days</option>
+              <option value="14">Under 14 days</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Max price (CJ cost)</label>
+            <select id="priceF">
+              <option value="5">Under $5</option>
+              <option value="10">Under $10</option>
+              <option value="15" selected>Under $15</option>
+              <option value="50">Under $50</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Min rating</label>
+            <select id="ratingF">
+              <option value="4.5">4.5+ ★</option>
+              <option value="4.0" selected>4.0+ ★</option>
+              <option value="3.5">3.5+ ★</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Markup</label>
+            <select id="markupF">
+              <option value="2">2x</option>
+              <option value="2.5" selected>2.5x</option>
+              <option value="3">3x</option>
+              <option value="3.5">3.5x</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="bulkBar" style="display:none;" class="bulk-bar">
+        <span id="bulkTxt">0 selected</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-yellow btn-sm" onclick="importSelected()">⬆ Import to Shopify</button>
+          <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.2);" onclick="clearSelection()">Clear</button>
+        </div>
+      </div>
+
+      <div class="product-grid" id="productGrid">
+        <div class="empty" style="grid-column:1/-1;">
+          <div class="empty-icon">🔍</div>
+          <h3>Search for products</h3>
+          <p>Filter by warehouse, shipping time, price and rating to find the best products for your store.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY PRODUCTS -->
+    <div id="page-products" class="page" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:13px;color:var(--gray-400);">Products synced from CJ Dropshipping to your Shopify store</div>
+        <button class="btn btn-ghost btn-sm" onclick="syncAll()">🔄 Sync All</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Product</th><th>CJ Cost</th><th>Sell Price</th><th>Profit</th><th>Stock</th><th>Orders</th><th>Last Sync</th><th>Status</th><th></th></tr></thead>
+            <tbody id="productsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="page-orders" class="page" style="display:none;">
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="fulfillAll()">⚡ Fulfill All Pending</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+        <span style="margin-left:auto;font-size:13px;color:var(--gray-400);align-self:center;" id="pendingCount"></span>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Order ID</th><th>Product</th><th>Customer</th><th>Country</th><th>Total</th><th>Profit</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="ordersTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="page-analytics" class="page" style="display:none;">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">💵</div>
+          <div class="metric-val" id="a-revenue">—</div>
+          <div class="metric-lbl">Total Revenue</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">💚</div>
+          <div class="metric-val" id="a-profit">—</div>
+          <div class="metric-lbl">Net Profit</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">📦</div>
+          <div class="metric-val" id="a-orders">—</div>
+          <div class="metric-lbl">Total Orders</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🎯</div>
+          <div class="metric-val" id="a-margin">—</div>
+          <div class="metric-lbl">Profit Margin</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-title">Profit by product</div>
+          <div id="profitByProduct"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Order breakdown</div>
+          <div id="orderBreakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUTOMATION -->
+    <div id="page-automation" class="page" style="display:none;">
+      <div class="card">
+        <div class="card-title">Sync & fulfillment</div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Auto price sync</strong><span>Update Shopify prices when CJ costs change</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Inventory sync</strong><span>Mark sold out when CJ stock hits zero</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Auto order fulfillment</strong><span>Place CJ order automatically when customer buys</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Tracking sync</strong><span>Import CJ tracking numbers to Shopify orders</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Filter slow shippers</strong><span>Hide products when ship time exceeds 14 days to US</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Weekly trending scan</strong><span>Auto-queue new trending gadgets every Monday</span></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Low stock alerts</strong><span>Notify when CJ stock drops below 10 units</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Shipping preferences</div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>Prefer US warehouse</strong><span>Always use US stock even if CN is cheaper</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>CJPacket for Canada</strong><span>Use CJPacket Liquid shipping for all Canada orders</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-wrap"><div class="toggle-info"><strong>USPS Priority for US</strong><span>Upgrade to USPS Priority when cost difference under $3</span></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+    </div>
+
+    <!-- PRICING -->
+    <div id="page-pricing" class="page" style="display:none;">
+      <div class="card">
+        <div class="card-title">Markup rules by cost tier</div>
+        <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px;">Sell price = CJ cost × multiplier. Auto-applied when importing products.</p>
+        <table>
+          <thead><tr><th>CJ Cost Range</th><th>Multiplier</th><th>Example: $5 cost</th><th>Margin</th></tr></thead>
+          <tbody>
+            <tr><td>Under $3</td><td><select class="markup-select"><option>3x</option><option selected>3.5x</option><option>4x</option></select></td><td style="color:var(--gray-400);">—</td><td><span class="badge badge-green">71%</span></td></tr>
+            <tr><td>$3 – $8</td><td><select class="markup-select"><option>2x</option><option selected>2.5x</option><option>3x</option></select></td><td>$12.50</td><td><span class="badge badge-green">60%</span></td></tr>
+            <tr><td>$8 – $20</td><td><select class="markup-select"><option>1.8x</option><option selected>2x</option><option>2.5x</option></select></td><td style="color:var(--gray-400);">—</td><td><span class="badge badge-blue">50%</span></td></tr>
+            <tr><td>Over $20</td><td><select class="markup-select"><option selected>1.6x</option><option>1.8x</option><option>2x</option></select></td><td style="color:var(--gray-400);">—</td><td><span class="badge badge-blue">37%</span></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;display:flex;gap:10px;">
+          <button class="btn btn-primary" onclick="toast('Pricing rules saved!','success')">Save Rules</button>
+          <button class="btn btn-ghost">Reset defaults</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Profit calculator</div>
+        <div class="filters" style="margin-bottom:12px;">
+          <div class="filter-group"><label>CJ Cost ($)</label><input type="number" id="pc-cost" value="5" step="0.5" oninput="calcProfit()"></div>
+          <div class="filter-group"><label>Shipping ($)</label><input type="number" id="pc-ship" value="0" step="0.5" oninput="calcProfit()"></div>
+          <div class="filter-group"><label>Markup</label><input type="number" id="pc-mark" value="2.5" step="0.1" oninput="calcProfit()"></div>
+          <div class="filter-group"><label>TX Fee (%)</label><input type="number" id="pc-fee" value="2.9" step="0.1" oninput="calcProfit()"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);">
+          <div style="text-align:center;"><div style="font-family:var(--font-display);font-size:26px;font-weight:800;" id="pc-sell">$12.50</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">Sell price</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--green);" id="pc-profit">$7.14</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">Profit/sale</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--blue);" id="pc-margin">57%</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">Margin</div></div>
+        </div>
+        <div class="profit-breakdown" id="pc-bar" style="margin-top:12px;border-radius:4px;overflow:hidden;height:8px;"></div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:6px;" id="pc-bar-label"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- IMPORT SUCCESS MODAL -->
+<div class="overlay" id="importModal">
+  <div class="modal">
+    <h3>✅ Product Imported!</h3>
+    <p style="color:var(--gray-600);font-size:14px;margin-bottom:16px;" id="importModalText">Product has been added to your Shopify store.</p>
+    <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">Live on your store at:</div>
+      <div style="font-size:13px;font-weight:600;color:var(--blue);" id="importModalUrl">—</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="closeModal()">Continue Importing</button>
+      <button class="btn btn-yellow" onclick="showPage('products',null);closeModal()">View My Products</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let selectedIds = new Set();
+let allCJProducts = [];
+let myProducts = [];
+let myOrders = [];
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────────
+function showPage(page, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.style.display = 'block';
+  if (navEl) navEl.classList.add('active');
+  const titles = {dashboard:'Dashboard',import:'Import Products',products:'My Products',orders:'Orders',analytics:'Analytics',automation:'Automation',pricing:'Pricing Rules'};
+  document.getElementById('pageTitle').textContent = titles[page] || page;
+  if (page === 'import') searchProducts();
+  if (page === 'products') loadProducts();
+  if (page === 'orders') loadOrders();
+  if (page === 'analytics') loadAnalytics();
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'pricing') calcProfit();
+}
+
+// ── API HELPERS ────────────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+// ── SEARCH ─────────────────────────────────────────────────────────────────────
+async function searchProducts() {
+  const q = document.getElementById('searchQ').value;
+  const cat = document.getElementById('catF').value;
+  const wh = document.getElementById('whF').value;
+  const days = document.getElementById('daysF').value;
+  const price = document.getElementById('priceF').value;
+  const rating = document.getElementById('ratingF').value;
+  const markup = parseFloat(document.getElementById('markupF').value);
+
+  const params = new URLSearchParams({ q, cat, warehouse: wh, maxDays: days, maxPrice: price, minRating: rating });
+  const data = await api('GET', '/api/cj/search?' + params);
+  allCJProducts = data.results;
+
+  const existing = await api('GET', '/api/products');
+  const importedSkus = new Set(existing.products.map(p => p.sku));
+
+  const grid = document.getElementById('productGrid');
+  if (!allCJProducts.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">🔍</div><h3>No products found</h3><p>Try different filters or keywords.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = allCJProducts.map(p => {
+    const sell = (p.cost * markup).toFixed(2);
+    const profit = (p.cost * markup - p.cost).toFixed(2);
+    const isImported = importedSkus.has(p.sku);
+    const isSel = selectedIds.has(p.id);
+    const tagHtml = p.tag === 'hot' ? '<span class="badge badge-red" style="position:absolute;top:8px;right:8px;">Hot</span>'
+      : p.tag === 'trending' ? '<span class="badge badge-blue" style="position:absolute;top:8px;right:8px;">Trending</span>'
+      : p.tag === 'new' ? '<span class="badge badge-green" style="position:absolute;top:8px;right:8px;">New</span>' : '';
+    return `<div class="product-card ${isSel?'selected':''} ${isImported?'imported':''}" id="pc-${p.id}" onclick="toggleSelect('${p.id}')">
+      <div class="product-img">${p.emoji}${p.usWarehouse?'<span class="wh-tag">US Stock</span>':''}${tagHtml}</div>
+      <div class="product-body">
+        <div class="product-title">${p.title}</div>
+        <div class="product-meta">
+          <span class="product-price">$${p.cost.toFixed(2)}</span>
+          <span class="product-ship">→ $${sell}</span>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
+          <span class="badge badge-gray">${p.rating}★</span>
+          <span class="badge badge-gray">${p.ship}d ship</span>
+          <span class="badge badge-green">+$${profit} profit</span>
+        </div>
+        ${isImported ? '<div style="margin-top:8px;font-size:11px;color:var(--green);font-weight:600;">✓ Already in your store</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  const el = document.getElementById('pc-' + id);
+  if (el) el.classList.toggle('selected', selectedIds.has(id));
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulkBar');
+  bar.style.display = selectedIds.size > 0 ? 'flex' : 'none';
+  document.getElementById('bulkTxt').textContent = selectedIds.size + ' product' + (selectedIds.size !== 1 ? 's' : '') + ' selected';
+}
+
+function clearSelection() {
+  selectedIds.forEach(id => { const el = document.getElementById('pc-' + id); if (el) el.classList.remove('selected'); });
+  selectedIds.clear();
+  updateBulkBar();
+}
+
+async function importSelected() {
+  if (!selectedIds.size) return;
+  const markup = parseFloat(document.getElementById('markupF').value);
+  let imported = 0;
+  let lastProduct = null;
+  for (const id of selectedIds) {
+    const data = await api('POST', '/api/import', { productId: id, markup });
+    if (data.success) { imported++; lastProduct = data; }
+  }
+  clearSelection();
+  toast(`${imported} product${imported !== 1 ? 's' : ''} imported to Shopify!`, 'success');
+  if (lastProduct) {
+    document.getElementById('importModalText').textContent = `"${lastProduct.product.title.substring(0,40)}..." is now live on your store.`;
+    document.getElementById('importModalUrl').textContent = lastProduct.shopifyUrl;
+    document.getElementById('importModal').classList.add('open');
+  }
+  document.getElementById('d-products').textContent = parseInt(document.getElementById('d-products').textContent) + imported;
+}
+
+function closeModal() { document.getElementById('importModal').classList.remove('open'); }
+
+// ── PRODUCTS ───────────────────────────────────────────────────────────────────
+async function loadProducts() {
+  const data = await api('GET', '/api/products');
+  myProducts = data.products;
+  const tb = document.getElementById('productsTable');
+  if (!myProducts.length) {
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray-400);">No products imported yet. Go to Import Products to get started.</td></tr>';
+    return;
+  }
+  tb.innerHTML = myProducts.map(p => {
+    const profit = ((p.sellPrice - p.cost) * p.orders).toFixed(2);
+    const margin = Math.round(((p.sellPrice - p.cost) / p.sellPrice) * 100);
+    const sync = new Date(p.lastSync);
+    const syncAgo = Math.round((Date.now() - sync) / 60000);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">${p.emoji}</span><div><div style="font-weight:600;">${p.title.substring(0,40)}${p.title.length>40?'...':''}</div><div style="font-size:11px;color:var(--gray-400);">${p.sku}</div></div></div></td>
+      <td>$${p.cost.toFixed(2)}</td>
+      <td><strong>$${p.sellPrice.toFixed(2)}</strong></td>
+      <td><span class="badge badge-green">${margin}%</span></td>
+      <td>${p.stock > 20 ? p.stock : `<span style="color:var(--red);font-weight:600;">${p.stock} low</span>`}</td>
+      <td>${p.orders}</td>
+      <td style="color:var(--gray-400);font-size:12px;">${syncAgo < 60 ? syncAgo + 'm ago' : Math.round(syncAgo/60) + 'h ago'}</td>
+      <td><span class="badge badge-green">Active</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="syncProduct('${p.id}')">Sync</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function syncProduct(id) {
+  await api('POST', '/api/sync');
+  toast('Product synced!', 'success');
+  loadProducts();
+}
+
+async function syncAll() {
+  const data = await api('POST', '/api/sync');
+  toast(`Synced ${data.synced} products with CJ Dropshipping`, 'success');
+  loadProducts();
+}
+
+// ── ORDERS ─────────────────────────────────────────────────────────────────────
+async function loadOrders() {
+  const data = await api('GET', '/api/orders');
+  myOrders = data.orders;
+  const pending = myOrders.filter(o => o.status === 'awaiting').length;
+  document.getElementById('pendingCount').textContent = `${pending} pending fulfillment`;
+  document.getElementById('orderBadge').textContent = pending;
+  document.getElementById('orderBadge').style.display = pending > 0 ? 'inline' : 'none';
+
+  const tb = document.getElementById('ordersTable');
+  tb.innerHTML = myOrders.map(o => {
+    const profit = (o.total - o.cost).toFixed(2);
+    const date = new Date(o.date).toLocaleDateString();
+    const statusBadge = o.status === 'fulfilled'
+      ? `<span class="badge badge-green">Fulfilled</span>`
+      : `<span class="badge badge-yellow">Awaiting</span>`;
+    const action = o.status === 'awaiting'
+      ? `<button class="btn btn-success btn-sm" onclick="fulfillOrder('${o.id}')">Fulfill</button>`
+      : `<span style="font-size:11px;color:var(--gray-400);">${o.tracking}</span>`;
+    return `<tr>
+      <td style="font-weight:600;font-size:12px;">${o.id}</td>
+      <td>${o.product}</td>
+      <td>${o.customer}</td>
+      <td>${o.country === 'US' ? '🇺🇸' : '🇨🇦'} ${o.country}</td>
+      <td><strong>$${o.total.toFixed(2)}</strong></td>
+      <td style="color:var(--green);font-weight:600;">+$${profit}</td>
+      <td style="color:var(--gray-400);font-size:12px;">${date}</td>
+      <td>${statusBadge}</td>
+      <td>${action}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function fulfillOrder(id) {
+  const data = await api('POST', `/api/orders/${id}/fulfill`);
+  if (data.success) {
+    toast(`Order ${id} fulfilled! Tracking: ${data.tracking}`, 'success');
+    loadOrders();
+  }
+}
+
+async function fulfillAll() {
+  const pending = myOrders.filter(o => o.status === 'awaiting');
+  for (const o of pending) await api('POST', `/api/orders/${o.id}/fulfill`);
+  toast(`${pending.length} orders fulfilled!`, 'success');
+  loadOrders();
+}
+
+// ── ANALYTICS ──────────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  const data = await api('GET', '/api/analytics');
+  document.getElementById('a-revenue').textContent = '$' + data.totalRevenue;
+  document.getElementById('a-profit').textContent = '$' + data.totalProfit;
+  document.getElementById('a-orders').textContent = data.totalOrders;
+  document.getElementById('a-margin').textContent = data.profitMargin + '%';
+
+  document.getElementById('profitByProduct').innerHTML = data.topProducts.map(p =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100);">
+      <span style="font-size:22px;">${p.emoji}</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${p.title.substring(0,30)}...</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100, p.orders * 5)}%;"></div></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;color:var(--green);">$${p.profit.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--gray-400);">${p.orders} orders</div>
+      </div>
+    </div>`
+  ).join('');
+
+  document.getElementById('orderBreakdown').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;">${data.fulfilledOrders}</div>
+        <div style="font-size:12px;color:var(--gray-400);">Fulfilled</div>
+      </div>
+      <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;">${data.totalOrders - data.fulfilledOrders}</div>
+        <div style="font-size:12px;color:var(--gray-400);">Pending</div>
+      </div>
+      <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;">$${data.avgOrderValue}</div>
+        <div style="font-size:12px;color:var(--gray-400);">Avg Order</div>
+      </div>
+      <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--green);">${data.profitMargin}%</div>
+        <div style="font-size:12px;color:var(--gray-400);">Margin</div>
+      </div>
+    </div>`;
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const [analytics, orders] = await Promise.all([api('GET','/api/analytics'), api('GET','/api/orders')]);
+  document.getElementById('d-revenue').textContent = '$' + analytics.totalRevenue;
+  document.getElementById('d-profit').textContent = '$' + analytics.totalProfit;
+  document.getElementById('d-orders').textContent = analytics.totalOrders;
+
+  // Revenue chart (mock 7 days)
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const vals = [4.2,0,12.99,9.99,14.99,9.99,12.99];
+  const max = Math.max(...vals);
+  document.getElementById('revenueChart').innerHTML = vals.map((v,i) =>
+    `<div class="chart-bar-wrap">
+      <div style="font-size:10px;color:var(--gray-400);margin-bottom:4px;">$${v>0?v.toFixed(0):''}</div>
+      <div class="chart-bar" style="height:${max>0?Math.round((v/max)*100):4}px;"></div>
+      <div class="chart-label">${days[i]}</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('recentOrders').innerHTML = orders.orders.slice(0,4).map(o =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+      <div><div style="font-size:13px;font-weight:600;">${o.product.substring(0,22)}...</div><div style="font-size:11px;color:var(--gray-400);">${o.customer} • ${o.country === 'US'?'🇺🇸':'🇨🇦'}</div></div>
+      <div style="text-align:right;"><div style="font-weight:700;">$${o.total.toFixed(2)}</div><div>${o.status==='fulfilled'?'<span class="badge badge-green">Done</span>':'<span class="badge badge-yellow">Pending</span>'}</div></div>
+    </div>`
+  ).join('');
+
+  document.getElementById('topProductsTable').innerHTML = analytics.topProducts.map(p => {
+    const margin = Math.round(((p.sellPrice - p.cost) / p.sellPrice) * 100);
+    return `<tr>
+      <td><span style="font-size:18px;margin-right:8px;">${p.emoji}</span>${p.title.substring(0,28)}...</td>
+      <td>${p.orders}</td>
+      <td>$${(p.sellPrice * p.orders).toFixed(2)}</td>
+      <td style="color:var(--green);font-weight:700;">$${p.profit.toFixed(2)}</td>
+      <td>${p.stock}</td>
+      <td><span class="badge badge-green">Active</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PROFIT CALC ────────────────────────────────────────────────────────────────
+function calcProfit() {
+  const cost = parseFloat(document.getElementById('pc-cost').value) || 0;
+  const ship = parseFloat(document.getElementById('pc-ship').value) || 0;
+  const mark = parseFloat(document.getElementById('pc-mark').value) || 2;
+  const fee = parseFloat(document.getElementById('pc-fee').value) || 0;
+  const sell = cost * mark;
+  const txFee = sell * (fee / 100) + 0.30;
+  const profit = sell - cost - ship - txFee;
+  const margin = sell > 0 ? Math.round((profit / sell) * 100) : 0;
+  document.getElementById('pc-sell').textContent = '$' + sell.toFixed(2);
+  document.getElementById('pc-profit').textContent = '$' + profit.toFixed(2);
+  document.getElementById('pc-margin').textContent = margin + '%';
+  const costPct = Math.round((cost / sell) * 100);
+  const feePct = Math.round((txFee / sell) * 100);
+  const profPct = Math.max(0, 100 - costPct - feePct);
+  document.getElementById('pc-bar').innerHTML =
+    `<div style="height:8px;width:${costPct}%;background:var(--red);"></div>`
+    + `<div style="height:8px;width:${feePct}%;background:var(--orange);"></div>`
+    + `<div style="height:8px;width:${profPct}%;background:var(--green);"></div>`;
+  document.getElementById('pc-bar-label').textContent = `Cost ${costPct}% / Fees ${feePct}% / Profit ${profPct}%`;
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
 
